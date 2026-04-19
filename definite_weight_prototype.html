@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Definite Weight™ - Live Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --primary: #003366; --secondary: #00B4D8; --accent: #48CAE4; --bg: #F8F9FA; --text: #212529; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 30px; border-radius: 12px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .header h1 { margin: 0 0 10px 0; font-size: 28px; }
+        .header p { margin: 0; opacity: 0.9; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 24px; }
+        .card { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .card h3 { margin-top: 0; color: var(--primary); font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .metric { font-size: 36px; font-weight: bold; color: var(--secondary); margin: 10px 0; }
+        .sub-text { font-size: 13px; color: #6c757d; }
+        .control-group { margin-bottom: 15px; }
+        .control-group label { display: block; margin-bottom: 5px; font-weight: 500; }
+        .control-group input { width: 100%; padding: 10px; border: 1px solid #dee2e6; border-radius: 6px; box-sizing: border-box; }
+        button { background-color: var(--secondary); color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: background 0.3s; }
+        button:hover { background-color: var(--primary); }
+        .chart-container { position: relative; height: 300px; width: 100%; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Definite Weight™ System</h1>
+            <p>Live WIM Sensor Data & Precision Fueling API Prototype</p>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3>Flight Configuration</h3>
+                <div class="control-group">
+                    <label>Flight Number</label>
+                    <input type="text" value="LH-410 (MUC to JFK)" disabled>
+                </div>
+                <div class="control-group">
+                    <label>Total Passengers</label>
+                    <input type="number" id="paxCount" value="280">
+                </div>
+                <div class="control-group">
+                    <label>Flight Duration (Hours)</label>
+                    <input type="number" id="flightHours" value="8.5" step="0.1">
+                </div>
+                <button onclick="runSimulation()">Initialize WIM Scan</button>
+            </div>
+
+            <div class="card">
+                <h3>Load Vector Analysis</h3>
+                <div class="metric" id="stdWeight">23,520 kg</div>
+                <div class="sub-text">Standard Average Weight (84kg/pax)</div>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+                <div class="metric" style="color: #2b9348;" id="defWeight">---</div>
+                <div class="sub-text">Definite Weight™ (Actual measured)</div>
+                <div id="weightDiff" style="margin-top: 10px; font-weight: bold; color: #2b9348;"></div>
+            </div>
+
+            <div class="card">
+                <h3>Economic & Environmental Impact</h3>
+                <div class="metric" id="fuelSavings">---</div>
+                <div class="sub-text">Contingency Fuel Saved (kg)</div>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+                <div class="metric" style="color: #e85d04;" id="cargoUpsell">---</div>
+                <div class="sub-text">Additional Cargo Revenue Unlocked ($)</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Fleet-Wide Annual Projection (100 Aircraft)</h3>
+            <div class="chart-container">
+                <canvas id="savingsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chartInstance = null;
+
+        function runSimulation() {
+            const paxCount = parseInt(document.getElementById('paxCount').value);
+            const flightHours = parseFloat(document.getElementById('flightHours').value);
+            const stdAverage = 84;
+
+            const actualAverage = 76 + (Math.random() * 5); 
+
+            const stdTotalWeight = paxCount * stdAverage;
+            const actualTotalWeight = paxCount * actualAverage;
+            const weightSaved = stdTotalWeight - actualTotalWeight;
+
+            const fuelBurnFactor = 0.035; 
+            const fuelSaved = weightSaved * fuelBurnFactor * flightHours;
+            const cargoRevenue = weightSaved * 4.0;
+
+            document.getElementById('stdWeight').innerText = Math.round(stdTotalWeight).toLocaleString() + ' kg';
+            document.getElementById('defWeight').innerText = Math.round(actualTotalWeight).toLocaleString() + ' kg';
+            document.getElementById('weightDiff').innerText = `Variance: -${Math.round(weightSaved).toLocaleString()} kg of ghost weight removed`;
+
+            document.getElementById('fuelSavings').innerText = Math.round(fuelSaved).toLocaleString() + ' kg';
+            document.getElementById('cargoUpsell').innerText = '$' + Math.round(cargoRevenue).toLocaleString();
+
+            updateChart(fuelSaved, cargoRevenue);
+        }
+
+        function updateChart(fuelSavedPerFlight, cargoRevenuePerFlight) {
+            const flightsPerYear = 365 * 3;
+            const fleetSize = 100;
+
+            const yearlyFuelSavings = fuelSavedPerFlight * flightsPerYear * fleetSize / 1000;
+            const yearlyCargoRev = cargoRevenuePerFlight * flightsPerYear * fleetSize;
+
+            const ctx = document.getElementById('savingsChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                    datasets: [
+                        { label: 'Fuel Savings (Metric Tons)', data: [yearlyFuelSavings/4, yearlyFuelSavings/4, yearlyFuelSavings/4, yearlyFuelSavings/4], backgroundColor: '#00B4D8' },
+                        { label: 'Cargo Revenue Upsell ($ Millions)', data: [yearlyCargoRev/4000000, yearlyCargoRev/4000000, yearlyCargoRev/4000000, yearlyCargoRev/4000000], backgroundColor: '#e85d04' }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+            });
+        }
+        window.onload = runSimulation;
+    </script>
+</body>
+</html>
